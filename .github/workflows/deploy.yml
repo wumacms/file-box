@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install
@@ -32,9 +32,13 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          VITE_BASE_URL: /${{ github.event.repository.name }}/
+          VITE_BASE_URL: ${{ secrets.CUSTOM_DOMAIN != '' && '/' || format('/{0}/', github.event.repository.name) }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Create CNAME
+        if: secrets.CUSTOM_DOMAIN != ''
+        run: echo ${{ secrets.CUSTOM_DOMAIN }} > dist/CNAME
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
