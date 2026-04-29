@@ -9,8 +9,8 @@
         </div>
         <div class="flex items-center space-x-3">
           <el-radio-group v-model="mode" size="small" class="custom-radio-group">
-            <el-radio-button label="preview">预览</el-radio-button>
-            <el-radio-button label="source">源码</el-radio-button>
+            <el-radio-button value="preview">预览</el-radio-button>
+            <el-radio-button value="source">源码</el-radio-button>
           </el-radio-group>
           <div class="h-4 w-px bg-white/10 mx-1"></div>
           <el-button 

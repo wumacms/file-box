@@ -12,8 +12,8 @@
             CSV 表格
           </span>
           <el-radio-group v-model="mode" size="small" class="custom-radio-group">
-            <el-radio-button label="table">数据表</el-radio-button>
-            <el-radio-button label="source">原始文本</el-radio-button>
+            <el-radio-button value="table">数据表</el-radio-button>
+            <el-radio-button value="source">原始文本</el-radio-button>
           </el-radio-group>
           <div class="h-4 w-px bg-white/10 mx-1"></div>
           <el-button 
