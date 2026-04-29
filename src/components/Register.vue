@@ -116,7 +116,7 @@ const handleRegister = async () => {
           email: registerForm.email,
           password: registerForm.password,
           options: {
-            emailRedirectTo: window.location.origin
+            emailRedirectTo: window.location.origin + window.location.pathname
           }
         });
 
