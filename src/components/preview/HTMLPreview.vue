@@ -62,6 +62,8 @@ import type { IFileItem } from '../../providers/type';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 
+import { copyToClipboard } from '../../utils/clipboard';
+
 const props = defineProps<{
   file: IFileItem;
 }>();
@@ -94,14 +96,14 @@ onMounted(async () => {
 
 const handleCopy = async () => {
   if (!content.value || copied.value) return;
-  try {
-    await navigator.clipboard.writeText(content.value);
+  const success = await copyToClipboard(content.value);
+  if (success) {
     copied.value = true;
     ElMessage.success('源码已复制');
     setTimeout(() => {
       copied.value = false;
     }, 2000);
-  } catch (err) {
+  } else {
     ElMessage.error('复制失败');
   }
 };

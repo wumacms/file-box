@@ -58,6 +58,8 @@ import 'highlight.js/styles/atom-one-dark.css';
 import MarkdownIt from 'markdown-it';
 import 'github-markdown-css/github-markdown-dark.css';
 
+import { copyToClipboard } from '../../utils/clipboard';
+
 const props = defineProps<{
   file: IFileItem;
 }>();
@@ -108,14 +110,14 @@ onMounted(async () => {
 
 const handleCopy = async () => {
   if (!content.value || copied.value) return;
-  try {
-    await navigator.clipboard.writeText(content.value);
+  const success = await copyToClipboard(content.value);
+  if (success) {
     copied.value = true;
     ElMessage.success('原始内容已复制');
     setTimeout(() => {
       copied.value = false;
     }, 2000);
-  } catch (err) {
+  } else {
     ElMessage.error('复制失败');
   }
 };
