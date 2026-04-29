@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!session" class="h-screen w-screen flex items-center justify-center bg-gray-50">
+  <div v-if="!session" class="w-screen flex items-center justify-center bg-gray-50">
     <Login v-if="!showRegister" @toggle="showRegister = true" />
     <Register v-else @toggle="showRegister = false" />
   </div>
