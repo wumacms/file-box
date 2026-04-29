@@ -11,6 +11,9 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,15 +33,20 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm build
+        run: |
+          if [ -n "$CUSTOM_DOMAIN" ]; then
+            export VITE_BASE_URL="/"
+          else
+            export VITE_BASE_URL="/${{ github.event.repository.name }}/"
+          fi
+          pnpm build
         env:
-          VITE_BASE_URL: ${{ secrets.CUSTOM_DOMAIN != '' && '/' || format('/{0}/', github.event.repository.name) }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Create CNAME
-        if: ${{ secrets.CUSTOM_DOMAIN != '' }}
-        run: echo "${{ secrets.CUSTOM_DOMAIN }}" > dist/CNAME
+        if: env.CUSTOM_DOMAIN != ''
+        run: echo "$CUSTOM_DOMAIN" > dist/CNAME
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
