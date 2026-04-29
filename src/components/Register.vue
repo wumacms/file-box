@@ -1,21 +1,22 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100">
-      <div>
-        <div class="flex justify-center">
-          <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
-            <el-icon :size="32" color="white"><Picture /></el-icon>
+    <div class="bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
+      <div class="auth-container">
+        <div>
+          <div class="flex justify-center">
+            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
+              <el-icon :size="32" color="white"><Picture /></el-icon>
+            </div>
           </div>
+          <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            创建账户
+          </h2>
+          <p class="mt-2 text-center text-sm text-gray-600">
+            加入File Box，开启您的云端资源管理之旅
+          </p>
         </div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          创建账户
-        </h2>
-        <p class="mt-2 text-center text-sm text-gray-600">
-          加入图片盒子，开启您的云端资源管理之旅
-        </p>
-      </div>
       
-      <el-form :model="registerForm" :rules="rules" ref="registerFormRef" class="mt-8 space-y-6" @submit.prevent="handleRegister">
+        <el-form :model="registerForm" :rules="rules" ref="registerFormRef" class="mt-8 space-y-6" @submit.prevent="handleRegister">
         <el-form-item prop="email">
           <el-input 
             v-model="registerForm.email" 
@@ -61,6 +62,7 @@
           <el-button link type="primary" @click="emit('toggle')">立即登录</el-button>
         </div>
       </el-form>
+      </div>
     </div>
   </div>
 </template>
@@ -134,7 +136,15 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
+.auth-container {
+  width: 320px;
+}
+
 :deep(.el-input__wrapper) {
   border-radius: 8px;
+}
+
+:deep(.el-button) {
+  width: 100%;
 }
 </style>

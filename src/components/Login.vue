@@ -1,21 +1,22 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100">
-      <div>
-        <div class="flex justify-center">
-          <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
-            <el-icon :size="32" color="white"><Picture /></el-icon>
+    <div class="bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
+      <div class="auth-container">
+        <div>
+          <div class="flex justify-center">
+            <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
+              <el-icon :size="32" color="white"><Picture /></el-icon>
+            </div>
           </div>
+          <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            File Box
+          </h2>
+          <p class="mt-2 text-center text-sm text-gray-600">
+            欢迎回来，请登录您的账户
+          </p>
         </div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          图片盒子 Image Box
-        </h2>
-        <p class="mt-2 text-center text-sm text-gray-600">
-          欢迎回来，请登录您的账户
-        </p>
-      </div>
       
-      <el-form :model="loginForm" class="mt-8 space-y-6" @submit.prevent="handleLogin">
+        <el-form :model="loginForm" class="mt-8 space-y-6" @submit.prevent="handleLogin">
         <el-form-item>
           <el-input 
             v-model="loginForm.email" 
@@ -58,6 +59,7 @@
           <el-button link type="primary" @click="emit('toggle')">立即注册</el-button>
         </div>
       </el-form>
+      </div>
     </div>
   </div>
 </template>
@@ -100,7 +102,15 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
+.auth-container {
+  width: 320px;
+}
+
 :deep(.el-input__wrapper) {
   border-radius: 8px;
+}
+
+:deep(.el-button) {
+  width: 100%;
 }
 </style>
