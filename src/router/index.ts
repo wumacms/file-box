@@ -1,6 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import MainLayout from '../views/MainLayout.vue'
-import Settings from '../views/Settings.vue'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -9,11 +8,6 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: MainLayout
-    },
-    {
-      path: '/settings',
-      name: 'settings',
-      component: Settings
     }
   ]
 })

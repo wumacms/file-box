@@ -18,13 +18,28 @@
       :is-mobile="isMobile" 
       :show-mobile="showMobileSidebar"
       @logout="handleLogout"
+      @open-settings="settingsVisible = true"
     />
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col min-w-0 bg-white relative overflow-hidden">
-      <router-view @toggle-sidebar="showMobileSidebar = true" />
+      <router-view 
+        @toggle-sidebar="showMobileSidebar = true" 
+        @open-settings="settingsVisible = true"
+      />
     </main>
 
+    <!-- Settings Drawer -->
+    <el-drawer
+      v-model="settingsVisible"
+      title="系统设置"
+      :size="isMobile ? '100%' : '600px'"
+      direction="rtl"
+      :close-on-click-modal="true"
+      destroy-on-close
+    >
+      <Settings :is-mobile="isMobile" />
+    </el-drawer>
   </div>
 </template>
 
@@ -37,6 +52,7 @@ import { OSSProvider } from './providers/OSSProvider';
 import Login from './components/Login.vue';
 import Register from './components/Register.vue';
 import Sidebar from './components/Sidebar.vue';
+import Settings from './components/Settings.vue';
 import { useRouter } from 'vue-router';
 
 const store = useImageBoxStore();
@@ -48,6 +64,7 @@ const showRegister = ref(false);
 
 const showMobileSidebar = ref(false);
 const isMobile = ref(false);
+const settingsVisible = ref(false);
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 768;

@@ -9,7 +9,7 @@
         <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
           <el-icon class="text-white" :size="24"><Box /></el-icon>
         </div>
-        <h1 class="text-xl font-bold tracking-tight text-gray-800">Image Box</h1>
+        <h1 class="text-xl font-bold tracking-tight text-gray-800">File Box</h1>
       </div>
     </div>
     
@@ -28,7 +28,7 @@
         </div>
       </div>
       <div class="grid grid-cols-2 gap-2">
-        <el-button size="small" class="!rounded-lg" @click="router.push('/settings')">
+        <el-button size="small" class="!rounded-lg" @click="$emit('open-settings')">
           <el-icon class="mr-1"><Setting /></el-icon>设置
         </el-button>
         <el-button size="small" type="danger" plain class="!rounded-lg" @click="$emit('logout')">
@@ -50,7 +50,6 @@ import { useImageBoxStore } from '../stores/imageBox';
 import FolderTree from './FolderTree.vue';
 import { Box, Setting } from '@element-plus/icons-vue';
 import { useResizable } from '../composables/useResizable';
-import { useRouter } from 'vue-router';
 
 defineProps<{
   isMobile: boolean;
@@ -63,6 +62,5 @@ defineEmits<{
 }>();
 
 const store = useImageBoxStore();
-const router = useRouter();
 const { width, startResize } = useResizable(320, 200, 800);
 </script>

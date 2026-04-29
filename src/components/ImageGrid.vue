@@ -129,7 +129,7 @@
             <div 
               v-if="store.isEditMode || store.selectedFiles.includes(file.path)"
               class="absolute top-2 left-2 w-6 h-6 rounded-lg flex items-center justify-center transition-colors shadow-lg"
-              :class="store.selectedFiles.includes(file.path) ? 'bg-blue-500 text-white' : 'bg-white/90 text-gray-300 border border-gray-200'"
+              :class="store.selectedFiles.includes(file.path) ? 'bg-blue-500 text-white' : 'bg-white text-gray-300 border border-gray-200'"
             >
               <el-icon><Check /></el-icon>
             </div>

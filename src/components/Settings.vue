@@ -1,63 +1,50 @@
 <template>
-  <div class="h-full bg-gray-50 p-6 overflow-y-auto">
-    <div class="max-w-4xl mx-auto">
-      <div class="flex justify-between items-center mb-6">
-        <div class="flex items-center space-x-4">
-          <el-button link @click="$router.push('/')" class="!p-0 hover:text-blue-600">
-            <el-icon :size="20"><ArrowLeft /></el-icon>
-          </el-button>
-          <h1 class="text-2xl font-bold text-gray-900">系统设置</h1>
-        </div>
-        <el-button type="primary" @click="openDrawer()">添加存储桶</el-button>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="p-6 border-b border-gray-100">
-          <h2 class="text-lg font-semibold text-gray-800">存储桶管理</h2>
-          <p class="text-sm text-gray-500 mt-1">配置您的阿里云 OSS 存储桶，支持添加多个存储桶并自由切换。</p>
-        </div>
-
-        <div class="p-6">
-          <el-table :data="bucketsStore.buckets" style="width: 100%" v-loading="bucketsStore.loading">
-            <el-table-column prop="name" label="名称" width="150" />
-            <el-table-column prop="bucket" label="Bucket" width="180" />
-            <el-table-column prop="region" label="地域" width="150" />
-            <el-table-column label="默认" width="80">
-              <template #default="scope">
-                <el-tag v-if="scope.row.is_default" type="success" size="small">默认</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" min-width="200" align="right">
-              <template #default="scope">
-                <el-button 
-                  v-if="!scope.row.is_default" 
-                  size="small" 
-                  @click="setDefault(scope.row)"
-                >设为默认</el-button>
-                <el-button size="small" @click="openDrawer(scope.row)">编辑</el-button>
-                <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
-              </template>
-            </el-table-column>
-            <template #empty>
-              <div class="py-8 text-gray-400">
-                暂无存储桶配置，请点击右上角添加。
-              </div>
-            </template>
-          </el-table>
-        </div>
-      </div>
+  <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <h2 class="text-lg font-semibold text-gray-800">存储桶管理</h2>
+      <el-button type="primary" size="small" @click="openDrawer()">添加存储桶</el-button>
     </div>
 
-    <!-- Edit Drawer -->
+    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <el-table :data="bucketsStore.buckets" style="width: 100%" v-loading="bucketsStore.loading">
+        <el-table-column prop="name" label="名称" min-width="120" />
+        <el-table-column prop="bucket" label="Bucket" min-width="120" />
+        <el-table-column label="默认" width="80">
+          <template #default="scope">
+            <el-tag v-if="scope.row.is_default" type="success" size="small">默认</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="160">
+          <template #default="scope">
+            <el-button 
+              v-if="!scope.row.is_default" 
+              size="small" 
+              link
+              type="primary"
+              @click="setDefault(scope.row)"
+            >设为默认</el-button>
+            <el-button size="small" link @click="openDrawer(scope.row)">编辑</el-button>
+            <el-button size="small" link type="danger" @click="handleDelete(scope.row)">删除</el-button>
+          </template>
+        </el-table-column>
+        <template #empty>
+          <div class="py-8 text-gray-400 text-sm text-center">
+            暂无存储桶配置
+          </div>
+        </template>
+      </el-table>
+    </div>
+
+    <!-- Inner Edit Drawer -->
     <el-drawer
       v-model="drawerVisible"
       :title="editingId ? '编辑存储桶' : '添加存储桶'"
-      size="500px"
+      :size="isMobile ? '100%' : '480px'"
       direction="rtl"
       :close-on-click-modal="false"
-      class="custom-drawer"
+      append-to-body
     >
-      <el-form :model="configForm" label-position="top">
+      <el-form :model="configForm" label-position="top" class="mt-2">
         <el-form-item label="名称 (自定义别名)">
           <el-input v-model="configForm.name" placeholder="例如: 工作图床" />
         </el-form-item>
@@ -93,7 +80,10 @@ import { useBucketsStore, type OssConfig } from '../stores/buckets';
 import { useImageBoxStore } from '../stores/imageBox';
 import { OSSProvider } from '../providers/OSSProvider';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { ArrowLeft } from '@element-plus/icons-vue';
+
+defineProps<{
+  isMobile?: boolean;
+}>();
 
 const bucketsStore = useBucketsStore();
 const imageBoxStore = useImageBoxStore();
@@ -141,7 +131,6 @@ const handleSave = async () => {
 
   saving.value = true;
   try {
-    // Validate connection
     const testProvider = new OSSProvider({
       region: configForm.region,
       accessKeyId: configForm.access_key,
@@ -152,7 +141,6 @@ const handleSave = async () => {
     
     await testProvider.checkConnection();
 
-    // Save configuration
     if (editingId.value) {
       await bucketsStore.updateBucket(editingId.value, { ...configForm }, imageBoxStore.user.id);
       ElMessage.success('存储桶更新成功');
