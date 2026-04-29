@@ -38,7 +38,7 @@ export class OSSProvider implements IStorageProvider {
           thumbnail: category === 'image' ? this.getProcessUrl(obj.name, { width: 200 }) : undefined,
           path: obj.name,
           size: obj.size,
-          type: ext ? `application/${ext}` : 'application/octet-stream', // 默认回退
+          type: ext === 'html' ? 'text/html' : (ext ? `application/${ext}` : 'application/octet-stream'), // 修正 HTML 类型
           category,
           createdAt: obj.lastModified
         };

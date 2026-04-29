@@ -39,9 +39,9 @@
         
         <iframe 
           v-if="mode === 'preview' && !loading"
-          :src="file.url"
+          :srcdoc="content"
           class="w-full h-full border-none bg-white"
-          sandbox="allow-scripts"
+          sandbox="allow-scripts allow-same-origin"
         ></iframe>
         
         <div v-else-if="mode === 'source'" class="w-full h-full overflow-auto p-6 bg-[#282c34] custom-scrollbar">
@@ -66,7 +66,7 @@ const props = defineProps<{
   file: IFileItem;
 }>();
 
-const mode = ref<'preview' | 'source'>('source');
+const mode = ref<'preview' | 'source'>('preview');
 const content = ref('');
 const loading = ref(true);
 const copied = ref(false);
