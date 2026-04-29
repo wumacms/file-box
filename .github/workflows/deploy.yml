@@ -37,8 +37,8 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Create CNAME
-        if: secrets.CUSTOM_DOMAIN != ''
-        run: echo ${{ secrets.CUSTOM_DOMAIN }} > dist/CNAME
+        if: ${{ secrets.CUSTOM_DOMAIN != '' }}
+        run: echo "${{ secrets.CUSTOM_DOMAIN }}" > dist/CNAME
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
