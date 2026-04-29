@@ -190,7 +190,7 @@
     <Transition name="fade">
       <div 
         v-if="previewVisible" 
-        class="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center overflow-hidden"
+        class="fixed inset-0 z-[1000] bg-black/95 flex items-center justify-center overflow-hidden"
         @keydown.stop="handleKeydown"
       >
         <!-- Dynamic Previewer (z-20 to be above background click area) -->
@@ -221,6 +221,9 @@
             <span class="text-gray-300/60 ml-2">({{ currentIndex + 1 }} / {{ store.files.length }})</span>
           </div>
           <div class="flex items-center space-x-3 pointer-events-auto">
+            <el-button circle class="!bg-white/10 !border-none !text-white hover:!bg-white/20 transition-all" @click.stop="copyUrl(store.files[currentIndex]?.url)" title="复制链接">
+              <el-icon :size="20"><Link /></el-icon>
+            </el-button>
             <el-button circle class="!bg-white/10 !border-none !text-white hover:!bg-white/20 transition-all" @click.stop="handleDownload(store.files[currentIndex]?.url, store.files[currentIndex]?.name)" title="下载">
               <el-icon :size="20"><Download /></el-icon>
             </el-button>
@@ -449,15 +452,44 @@ const handleDownload = async (url: string, name: string) => {
 };
 
 const copyUrl = async (url: string) => {
+  if (!url) {
+    ElMessage.warning('链接无效');
+    return;
+  }
+  
+  const doCopy = async (text: string) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const result = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return result;
+    }
+  };
+
   try {
-    await navigator.clipboard.writeText(url);
-    ElMessage({
-      message: '文件链接已复制',
-      type: 'success',
-      plain: true,
-    });
+    const success = await doCopy(url);
+    if (success) {
+      ElMessage.success({
+        message: '链接已复制到剪贴板',
+        duration: 2000,
+        grouping: true
+      });
+    } else {
+      throw new Error('Copy command failed');
+    }
   } catch (err) {
-    ElMessage.error('复制失败');
+    console.error('Copy failed:', err);
+    ElMessage.error('复制失败，请尝试右键手动复制');
   }
 };
 
