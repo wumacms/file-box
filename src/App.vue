@@ -1,7 +1,7 @@
 <template>
   <div v-if="!session" class="h-screen w-screen flex items-center justify-center bg-gray-50">
-    <Login v-if="!showRegister" @switch-to-register="showRegister = true" />
-    <Register v-else @switch-to-login="showRegister = false" />
+    <Login v-if="!showRegister" @toggle="showRegister = true" />
+    <Register v-else @toggle="showRegister = false" />
   </div>
 
   <div v-else class="h-screen w-screen flex bg-white overflow-hidden font-sans antialiased text-gray-900 relative">
