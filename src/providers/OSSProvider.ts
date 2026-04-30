@@ -34,7 +34,7 @@ export class OSSProvider implements IStorageProvider {
         return {
           id: obj.name,
           name,
-          url: this.client!.signatureUrl(obj.name, { expires: 3600 }),
+          url: this.client!.generateObjectUrl(obj.name),
           thumbnail: category === 'image' ? this.getProcessUrl(obj.name, { width: 200 }) : undefined,
           path: obj.name,
           size: obj.size,
@@ -91,7 +91,7 @@ export class OSSProvider implements IStorageProvider {
     return {
       id: result.name,
       name: result.name.split('/').pop() || '',
-      url: this.client.signatureUrl(result.name, { expires: 3600 }),
+      url: this.client.generateObjectUrl(result.name),
       thumbnail: category === 'image' ? this.getProcessUrl(result.name, { width: 200 }) : undefined,
       path: result.name,
       size: file.size,
@@ -191,16 +191,14 @@ export class OSSProvider implements IStorageProvider {
     // 处理特殊情况：如果没有 resize 也没有 format，默认 resize
     if (process === 'image') process = 'image/resize,w_200';
     
-    // 返回带签名的处理后 URL
-    return this.client.signatureUrl(path, {
-      expires: 3600,
-      process
-    });
+    // 返回公共访问链接并拼接处理参数
+    const baseUrl = this.client.generateObjectUrl(path);
+    return `${baseUrl}?x-oss-process=${process}`;
   }
 
   getSignatureUrl(path: string): string {
     if (!this.client) return '';
-    return this.client.signatureUrl(path, { expires: 3600 });
+    return this.client.generateObjectUrl(path);
   }
 
   async getStats(): Promise<{ totalSize: number; count: number }> {
@@ -238,7 +236,7 @@ export class OSSProvider implements IStorageProvider {
       return {
         id: result.name,
         name: result.name.split('/').pop() || '',
-        url: this.client.signatureUrl(result.name, { expires: 3600 }),
+        url: this.client.generateObjectUrl(result.name),
         thumbnail: this.getProcessUrl(result.name, { width: 200 }),
         path: result.name,
         size: blob.size,
