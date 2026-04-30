@@ -7,7 +7,7 @@
         </div>
       </template>
       <div class="mt-4 flex flex-col items-center space-y-4">
-        <p class="text-sm text-gray-400">可以上传图片，或者新建目录来整理您的文件</p>
+        <p class="text-sm text-gray-400">可以上传文件，或者新建目录来整理您的资源</p>
         <el-button type="primary" size="large" class="!rounded-xl shadow-lg shadow-blue-100/50 hover:-translate-y-0.5 transition-transform" @click="handleUploadClick">
           <el-icon class="mr-2"><UploadFilled /></el-icon>
           立即上传
@@ -20,7 +20,6 @@
       ref="fileInput"
       type="file"
       multiple
-      accept="image/*"
       class="hidden"
       @change="handleFileChange"
     />
@@ -52,7 +51,7 @@ const handleFileChange = async (event: Event) => {
   if (files && files.length > 0) {
     try {
       await store.uploadFiles(files);
-      ElMessage.success(`成功上传 ${files.length} 张图片`);
+      ElMessage.success(`成功上传 ${files.length} 个文件`);
     } catch (err: any) {
       ElMessage.error(err.message || '上传失败');
     }
