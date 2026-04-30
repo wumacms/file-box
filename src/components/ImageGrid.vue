@@ -178,6 +178,9 @@
                       <el-dropdown-item command="info" divided>
                         <el-icon><InfoFilled /></el-icon>文件详情
                       </el-dropdown-item>
+                      <el-dropdown-item command="delete" class="!text-red-500">
+                        <el-icon><Delete /></el-icon>删除文件
+                      </el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
                 </el-dropdown>
@@ -532,6 +535,9 @@ const handleCommand = (command: string, file: IFileItem) => {
       selectedFileInfo.value = file;
       infoVisible.value = true;
       break;
+    case 'delete':
+      handleDeleteSingle(file);
+      break;
   }
 };
 
@@ -654,6 +660,28 @@ const handleDeleteFolder = async (path: string) => {
   } catch (err: any) {
     if (err !== 'cancel') {
       ElMessage.error(err.message || '操作失败');
+    }
+  }
+};
+
+const handleDeleteSingle = async (file: IFileItem) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要永久删除文件 "${file.name}" 吗？`,
+      '删除确认',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        confirmButtonClass: 'el-button--danger',
+        type: 'warning',
+      }
+    );
+    
+    await store.deleteFile(file.path);
+    ElMessage.success('文件已删除');
+  } catch (err: any) {
+    if (err !== 'cancel') {
+      ElMessage.error(err.message || '删除失败');
     }
   }
 };

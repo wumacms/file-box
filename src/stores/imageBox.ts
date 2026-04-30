@@ -188,6 +188,27 @@ export const useImageBoxStore = defineStore('imageBox', {
       }
     },
 
+    async deleteFile(path: string) {
+      if (!this.provider) return;
+      this.loading = true;
+      try {
+        await this.provider.delete([path]);
+        
+        // 同步从数据库删除
+        await supabase
+          .from('images')
+          .delete()
+          .eq('path', path);
+
+        await this.fetchCurrentDirectory();
+      } catch (error) {
+        console.error('Delete file failed:', error);
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async deleteFolder(path: string) {
       if (!this.provider) return;
       this.loading = true;
