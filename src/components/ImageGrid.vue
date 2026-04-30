@@ -166,6 +166,9 @@
                       <el-dropdown-item command="rename">
                         <el-icon><Edit /></el-icon>重命名
                       </el-dropdown-item>
+                      <el-dropdown-item v-if="file.category === 'image' && !file.name.endsWith('.avif')" command="convert-avif">
+                        <el-icon><Picture /></el-icon>转换为 AVIF
+                      </el-dropdown-item>
                       <el-dropdown-item command="info" divided>
                         <el-icon><InfoFilled /></el-icon>文件详情
                       </el-dropdown-item>
@@ -426,6 +429,9 @@ const handleCommand = (command: string, file: IFileItem) => {
     case 'rename':
       handleRename(file);
       break;
+    case 'convert-avif':
+      handleConvert(file, 'avif');
+      break;
     case 'info':
       selectedFileInfo.value = file;
       infoVisible.value = true;
@@ -490,6 +496,27 @@ const copyUrl = async (url: string) => {
   } catch (err) {
     console.error('Copy failed:', err);
     ElMessage.error('复制失败，请尝试右键手动复制');
+  }
+};
+
+const handleConvert = async (file: IFileItem, format: string) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要将图片转换为 ${format.toUpperCase()} 格式吗？这将在当前目录下生成一个新文件。`,
+      '格式转换',
+      {
+        confirmButtonText: '立即转换',
+        cancelButtonText: '取消',
+        type: 'info',
+      }
+    );
+    
+    await store.convertFile(file, format);
+    ElMessage.success(`转换成功：${file.name.split('.')[0]}.${format}`);
+  } catch (err: any) {
+    if (err !== 'cancel') {
+      ElMessage.error(err.message || '转换失败');
+    }
   }
 };
 

@@ -144,11 +144,23 @@ export class OSSProvider implements IStorageProvider {
     return [];
   }
 
-  getProcessUrl(path: string, options: { width?: number; height?: number }): string {
+  getProcessUrl(path: string, options: { width?: number; height?: number; format?: string }): string {
     if (!this.client) return '';
-    let process = 'image/resize';
-    if (options.width) process += `,w_${options.width}`;
-    if (options.height) process += `,h_${options.height}`;
+    let process = 'image';
+    
+    if (options.width || options.height) {
+      process += '/resize';
+      if (options.width) process += `,w_${options.width}`;
+      if (options.height) process += `,h_${options.height}`;
+    }
+
+    if (options.format) {
+      // 如果已经有了 resize，需要用 / 分隔，否则直接用 /format
+      process += (process === 'image' ? '/format' : '/format') + `,${options.format}`;
+    }
+
+    // 处理特殊情况：如果没有 resize 也没有 format，默认 resize
+    if (process === 'image') process = 'image/resize,w_200';
     
     // 返回带签名的处理后 URL
     return this.client.signatureUrl(path, {
@@ -164,6 +176,51 @@ export class OSSProvider implements IStorageProvider {
 
   async getStats(): Promise<{ totalSize: number; count: number }> {
     return { totalSize: 0, count: 0 };
+  }
+
+  async convert(path: string, targetFormat: string): Promise<IFileItem> {
+    if (!this.client) throw new Error('OSS 客户端未初始化');
+    
+    const fileName = path.split('/').pop() || '';
+    const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
+    const targetPath = path.replace(fileName, `${nameWithoutExt}.${targetFormat}`);
+    
+    // 方案改进：由于某些版本的 OSS Browser SDK 可能缺少 processObject 方法，
+    // 我们采用“云端处理后下载并上传”的策略。
+    // 这仍然利用了 OSS 的云端转码能力（不消耗客户端 CPU）。
+    
+    try {
+      // 1. 获取转码后的带签名 URL
+      const processUrl = this.getProcessUrl(path, { format: targetFormat });
+      
+      // 2. Fetch 该 URL 获取 Blob (云端在这里完成转码)
+      const response = await fetch(processUrl);
+      if (!response.ok) throw new Error(`云端转码失败: ${response.statusText}`);
+      const blob = await response.blob();
+      
+      // 3. 将转换后的 Blob 上传回 OSS
+      const result = await this.client.put(targetPath, blob);
+      
+      // 4. 获取文件元数据
+      const headResult = await this.client.head(targetPath);
+      const headers = headResult.res.headers as any;
+      const category = getFileCategory(`image/${targetFormat}`, targetPath);
+
+      return {
+        id: result.name,
+        name: result.name.split('/').pop() || '',
+        url: this.client.signatureUrl(result.name, { expires: 3600 }),
+        thumbnail: this.getProcessUrl(result.name, { width: 200 }),
+        path: result.name,
+        size: blob.size,
+        type: `image/${targetFormat}`,
+        category,
+        createdAt: headers['last-modified'] || new Date().toISOString()
+      };
+    } catch (error: any) {
+      console.error('AVIF Conversion failed:', error);
+      throw new Error(`转换失败: ${error.message}`);
+    }
   }
 
   async checkConnection(): Promise<void> {

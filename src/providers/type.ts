@@ -51,7 +51,10 @@ export interface IStorageProvider {
   search(query: string): Promise<IFileItem[]>;
 
   // 获取处理后的图片 URL (如缩略图)
-  getProcessUrl(path: string, options: { width?: number; height?: number }): string;
+  getProcessUrl(path: string, options: { width?: number; height?: number; format?: string }): string;
   getSignatureUrl(path: string): string;
   getStats(): Promise<{ totalSize: number; count: number }>;
+
+  // 转换文件格式 (持久化保存)
+  convert(path: string, targetFormat: string): Promise<IFileItem>;
 }

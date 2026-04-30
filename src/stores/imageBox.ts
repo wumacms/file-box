@@ -284,6 +284,33 @@ export const useImageBoxStore = defineStore('imageBox', {
       }
     },
 
+    async convertFile(file: IFileItem, targetFormat: string) {
+      if (!this.provider || !this.user) return;
+      this.loading = true;
+      try {
+        const newFile = await this.provider.convert(file.path, targetFormat);
+        
+        // 同步到 Supabase 数据库
+        await supabase.from('images').insert({
+          user_id: this.user.id,
+          name: newFile.name,
+          path: newFile.path,
+          url: newFile.url,
+          size: newFile.size,
+          type: newFile.type,
+          category: newFile.category,
+          metadata: { ...file.metadata, convertedFrom: file.path }
+        });
+
+        await this.fetchCurrentDirectory();
+      } catch (error) {
+        console.error('Conversion failed:', error);
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     toggleEditMode() {
       this.isEditMode = !this.isEditMode;
       if (!this.isEditMode) {
