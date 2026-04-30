@@ -50,14 +50,43 @@ export class OSSProvider implements IStorageProvider {
   async upload(file: File, path: string, onProgress?: (p: number) => void): Promise<IFileItem> {
     if (!this.client) throw new Error('OSS Client not initialized');
     
-    const fullPath = `${path}${Date.now()}-${file.name}`;
+    // 自动重命名逻辑：检测同名文件并添加 (n) 后缀
+    let finalName = file.name;
+    const dotIndex = file.name.lastIndexOf('.');
+    const baseName = dotIndex > -1 ? file.name.substring(0, dotIndex) : file.name;
+    const ext = dotIndex > -1 ? file.name.substring(dotIndex) : '';
+    
+    let counter = 1;
+    let exists = true;
+    
+    while (exists) {
+      try {
+        const checkPath = `${path}${finalName}`;
+        // 使用 head 检查文件是否存在
+        await this.client.head(checkPath);
+        // 如果没报错，说明文件已存在，增加序号继续探测
+        finalName = `${baseName} (${counter})${ext}`;
+        counter++;
+        // 防止极端情况死循环（如 100 次冲突后放弃）
+        if (counter > 100) throw new Error('文件名冲突过多，请手动重命名');
+      } catch (err: any) {
+        // 状态码 404 或 NoSuchKey 表示文件不存在，名称可用
+        if (err.status === 404 || err.name === 'NoSuchKeyError') {
+          exists = false;
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    const fullPath = `${path}${finalName}`;
     const result = await this.client.put(fullPath, file, {
       progress: (p: number) => {
         if (onProgress) onProgress(p * 100);
       }
     } as any);
 
-    const category = getFileCategory(file.type, file.name);
+    const category = getFileCategory(file.type, finalName);
 
     return {
       id: result.name,
@@ -205,7 +234,7 @@ export class OSSProvider implements IStorageProvider {
       const headResult = await this.client.head(targetPath);
       const headers = headResult.res.headers as any;
       const category = getFileCategory(`image/${targetFormat}`, targetPath);
-
+      
       return {
         id: result.name,
         name: result.name.split('/').pop() || '',

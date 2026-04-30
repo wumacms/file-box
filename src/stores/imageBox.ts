@@ -12,6 +12,13 @@ interface ImageBoxState {
   isEditMode: boolean;
   provider: IStorageProvider | null;
   user: any | null;
+  uploadProgress: {
+    visible: boolean;
+    percent: number;
+    fileName: string;
+    total: number;
+    current: number;
+  };
 }
 
 export const useImageBoxStore = defineStore('imageBox', {
@@ -24,6 +31,13 @@ export const useImageBoxStore = defineStore('imageBox', {
     isEditMode: false,
     provider: null,
     user: null,
+    uploadProgress: {
+      visible: false,
+      percent: 0,
+      fileName: '',
+      total: 0,
+      current: 0
+    }
   }),
 
   actions: {
@@ -106,14 +120,28 @@ export const useImageBoxStore = defineStore('imageBox', {
 
     async uploadFiles(files: FileList) {
       if (!this.provider || !this.user) return;
-      this.loading = true;
+      
+      // 关键修复：锁定触发上传时的路径，防止上传过程中切换目录导致路径漂移
+      const targetPath = this.currentPath;
+      
+      this.uploadProgress.visible = true;
+      this.uploadProgress.total = files.length;
+      this.uploadProgress.current = 0;
+      
       try {
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          const fileItem = await this.provider.upload(file, this.currentPath);
+          this.uploadProgress.fileName = file.name;
+          this.uploadProgress.current = i + 1;
+          this.uploadProgress.percent = 0;
+
+          // 使用锁定的 targetPath 而非实时变化的 this.currentPath
+          const fileItem = await this.provider.upload(file, targetPath, (percent) => {
+            this.uploadProgress.percent = Math.round(percent);
+          });
           
-          // 同步到 Supabase 数据库
-          await supabase.from('images').insert({
+          // 同步到 Supabase 数据库 (使用 upsert 支持覆盖同名文件)
+          await supabase.from('images').upsert({
             user_id: this.user.id,
             name: fileItem.name,
             path: fileItem.path,
@@ -122,13 +150,19 @@ export const useImageBoxStore = defineStore('imageBox', {
             type: fileItem.type,
             category: fileItem.category,
             metadata: { lastModified: file.lastModified }
-          });
+          }, { onConflict: 'path' });
         }
-        await this.fetchCurrentDirectory();
+        // 只有当用户还在当前目录下时，才自动刷新列表
+        if (this.currentPath === targetPath) {
+          await this.fetchCurrentDirectory();
+        }
       } catch (error) {
         console.error('Upload failed:', error);
       } finally {
-        this.loading = false;
+        // 延迟关闭进度条，让用户看到 100% 的完成态
+        setTimeout(() => {
+          this.uploadProgress.visible = false;
+        }, 1500);
       }
     },
 
@@ -290,8 +324,8 @@ export const useImageBoxStore = defineStore('imageBox', {
       try {
         const newFile = await this.provider.convert(file.path, targetFormat);
         
-        // 同步到 Supabase 数据库
-        await supabase.from('images').insert({
+        // 同步到 Supabase 数据库 (使用 upsert 支持覆盖同名文件)
+        await supabase.from('images').upsert({
           user_id: this.user.id,
           name: newFile.name,
           path: newFile.path,
@@ -300,7 +334,7 @@ export const useImageBoxStore = defineStore('imageBox', {
           type: newFile.type,
           category: newFile.category,
           metadata: { ...file.metadata, convertedFrom: file.path }
-        });
+        }, { onConflict: 'path' });
 
         await this.fetchCurrentDirectory();
       } catch (error) {

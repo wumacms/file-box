@@ -1,5 +1,11 @@
 <template>
-  <div v-loading="store.loading" class="flex-1 overflow-y-auto bg-white p-6 flex flex-col relative">
+  <div 
+    v-loading="store.loading" 
+    class="flex-1 overflow-y-auto bg-white p-6 flex flex-col relative group/grid"
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
+  >
     <template v-if="store.folders.length > 0 || store.files.length > 0">
       <!-- Folders Section -->
       <div v-if="store.folders.length > 0" class="mb-8">
@@ -186,6 +192,22 @@
     
     <!-- Empty State -->
     <EmptyState v-else-if="!store.loading" />
+
+    <!-- Drag & Drop Overlay -->
+    <transition name="fade">
+      <div 
+        v-if="isDragging" 
+        class="absolute inset-0 z-[100] bg-blue-600/5 backdrop-blur-[2px] flex items-center justify-center p-6 transition-all duration-300 pointer-events-none"
+      >
+        <div class="w-full h-full border-2 border-dashed border-blue-400 rounded-3xl bg-white/80 flex flex-col items-center justify-center shadow-2xl">
+          <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4 animate-bounce">
+            <el-icon :size="40" class="text-blue-600"><UploadFilled /></el-icon>
+          </div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2">释放文件以开始上传</h3>
+          <p class="text-gray-500">支持拖入多个图片、视频或文档文件</p>
+        </div>
+      </div>
+    </transition>
   </div>
 
   <!-- File Preview Fullscreen Overlay -->
@@ -351,6 +373,54 @@
       </div>
     </template>
   </el-dialog>
+
+  <!-- Upload Progress Toast/Card -->
+  <transition name="el-zoom-in-bottom">
+    <div 
+      v-if="store.uploadProgress.visible"
+      class="fixed bottom-8 right-8 z-[2000] w-80 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto"
+    >
+      <div class="p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <el-icon v-if="store.uploadProgress.percent < 100" class="text-blue-600 animate-spin"><Loading /></el-icon>
+              <el-icon v-else class="text-green-500"><CircleCheckFilled /></el-icon>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-gray-800">
+                {{ store.uploadProgress.percent < 100 ? '正在上传...' : '上传完成' }}
+              </p>
+              <p class="text-[10px] text-gray-400 uppercase tracking-tighter">
+                第 {{ store.uploadProgress.current }} / {{ store.uploadProgress.total }} 个文件
+              </p>
+            </div>
+          </div>
+          <span class="text-lg font-black text-blue-600">{{ store.uploadProgress.percent }}%</span>
+        </div>
+        
+        <div class="mb-2">
+          <div class="flex justify-between text-[11px] mb-1">
+            <span class="text-gray-500 truncate max-w-[180px]">{{ store.uploadProgress.fileName }}</span>
+            <span class="text-gray-400 font-mono">{{ store.uploadProgress.percent }}%</span>
+          </div>
+          <el-progress 
+            :percentage="store.uploadProgress.percent" 
+            :stroke-width="6" 
+            :show-text="false"
+            :color="store.uploadProgress.percent === 100 ? '#10b981' : '#2563eb'"
+            class="upload-progress-bar"
+          />
+        </div>
+      </div>
+      
+      <!-- Footer Info -->
+      <div v-if="store.uploadProgress.percent === 100 && store.uploadProgress.current === store.uploadProgress.total" class="bg-green-50 px-4 py-2 flex items-center space-x-2">
+        <el-icon class="text-green-600"><SuccessFilled /></el-icon>
+        <span class="text-[10px] font-bold text-green-700 uppercase">所有任务已同步至云端</span>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup lang="ts">
@@ -359,7 +429,7 @@ import { useImageBoxStore } from '../stores/imageBox';
 import { 
   Folder, Check, View, Link, Delete, Edit, Rank, HomeFilled, CircleCheck,
   Picture, VideoCamera, Headset, Document, Files, Reading, Download, MoreFilled, InfoFilled,
-  ArrowLeft, ArrowRight, Close, Grid
+  ArrowLeft, ArrowRight, Close, Grid, UploadFilled, Loading, CircleCheckFilled, SuccessFilled
 } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import type { IFileItem } from '../providers/type';
@@ -373,6 +443,32 @@ const infoVisible = ref(false);
 const selectedFileInfo = ref<IFileItem | null>(null);
 const moveDialogVisible = ref(false);
 const targetPath = ref('');
+const isDragging = ref(false);
+
+const handleDragOver = (e: DragEvent) => {
+  e.preventDefault();
+  if (e.dataTransfer?.types.includes('Files')) {
+    isDragging.value = true;
+  }
+};
+
+const handleDragLeave = (e: DragEvent) => {
+  e.preventDefault();
+  // Check if we are actually leaving the container, not just entering a child
+  // But since overlay has pointer-events-none, it's simpler
+  isDragging.value = false;
+};
+
+const handleDrop = async (e: DragEvent) => {
+  e.preventDefault();
+  isDragging.value = false;
+  
+  const files = e.dataTransfer?.files;
+  if (files && files.length > 0) {
+    await store.uploadFiles(files);
+    ElMessage.success(`已开始上传 ${files.length} 个文件`);
+  }
+};
 
 const treeProps = {
   label: 'name',
